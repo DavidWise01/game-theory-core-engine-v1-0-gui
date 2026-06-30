@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Game Theory Core Engine v1.0 GUI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #080a12;
+    --panel: #111827;
+    --panel2: #161f31;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --line: #2f3a4f;
+    --accent: #8ab4ff;
+    --good: #86efac;
+    --bad: #fca5a5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top, #172033 0%, var(--bg) 45%);
+    color: var(--text);
+    font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  }
+  header {
+    padding: 24px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(8, 10, 18, 0.72);
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(10px);
+  }
+  h1 { margin: 0 0 6px; font-size: 24px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 18px;
+    padding: 18px;
+  }
+  section {
+    background: rgba(17, 24, 39, 0.88);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.22);
+  }
+  h2 { margin: 0 0 12px; font-size: 16px; }
+  label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 13px; }
+  select, button {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel2);
+    color: var(--text);
+    padding: 10px;
+    font-size: 14px;
+  }
+  button {
+    cursor: pointer;
+    margin-top: 10px;
+    background: linear-gradient(180deg, #23314e, #172033);
+  }
+  button:hover { border-color: var(--accent); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .metric {
+    font-size: 28px;
+    font-weight: 800;
+  }
+  .muted { color: var(--muted); font-size: 13px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 14px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 10px;
+    text-align: left;
+    font-size: 13px;
+  }
+  th { color: var(--muted); font-weight: 600; background: rgba(255,255,255,.03); }
+  .cooperate { color: var(--good); font-weight: 700; }
+  .defect { color: var(--bad); font-weight: 700; }
+  pre {
+    white-space: pre-wrap;
+    background: #080a12;
+    border: 1px solid var(--line);
+    padding: 12px;
+    border-radius: 12px;
+    max-height: 280px;
+    overflow: auto;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Game Theory Core Engine v1.0 GUI</h1>
+  <div class="sub">Continuity container: observe → choose → score → transition → memory → next state</div>
+</header>
+
+<main>
+  <section>
+    <h2>Controls</h2>
+
+    <label>Player 1 Strategy</label>
+    <select id="p1Strategy">
+      <option value="tit_for_tat">Tit for Tat</option>
+      <option value="always_cooperate">Always Cooperate</option>
+      <option value="always_defect">Always Defect</option>
+      <option value="random">Random</option>
+    </select>
+
+    <label>Player 2 Strategy</label>
+    <select id="p2Strategy">
+      <option value="always_cooperate">Always Cooperate</option>
+      <option value="tit_for_tat">Tit for Tat</option>
+      <option value="always_defect">Always Defect</option>
+      <option value="random">Random</option>
+    </select>
+
+    <button onclick="step()">Run 1 Tick</button>
+    <button onclick="runMany(10)">Run 10 Ticks</button>
+    <button onclick="resetGame()">Reset Container</button>
+
+    <h2 style="margin-top:20px;">Core Primitives</h2>
+    <pre>1. Players
+2. State
+3. Actions
+4. Information
+5. Payoffs
+6. Rules
+7. Strategy
+8. Opponent Model
+9. Equilibrium Check
+10. Memory
+11. Update / Transition</pre>
+  </section>
+
+  <section>
+    <h2>Container Snapshot</h2>
+    <div class="grid">
+      <div class="card"><div class="metric" id="tick">0</div><div class="muted">Tick</div></div>
+      <div class="card"><div class="metric" id="round">0</div><div class="muted">Round</div></div>
+      <div class="card"><div class="metric" id="p1Score">0</div><div class="muted">P1 Score</div></div>
+      <div class="card"><div class="metric" id="p2Score">0</div><div class="muted">P2 Score</div></div>
+    </div>
+
+    <h2 style="margin-top:20px;">History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Tick</th>
+          <th>P1 Action</th>
+          <th>P2 Action</th>
+          <th>P1 Payoff</th>
+          <th>P2 Payoff</th>
+        </tr>
+      </thead>
+      <tbody id="history"></tbody>
+    </table>
+
+    <h2 style="margin-top:20px;">Audit Log</h2>
+    <pre id="audit"></pre>
+  </section>
+</main>
+
+<script>
+const ACTIONS = ["cooperate", "defect"];
+
+let container;
+
+function makeContainer() {
+  return {
+    label: "game-theory-core-engine-v1.0-gui",
+    tick: 0,
+    state: { round: 0, history: [], scores: { P1: 0, P2: 0 } },
+    memory: { P1: [], P2: [] },
+    audit: []
+  };
+}
+
+function legalActions() {
+  return ACTIONS;
+}
+
+function chooseAction(playerId, strategy) {
+  const legal = legalActions();
+
+  if (strategy === "always_cooperate") return "cooperate";
+  if (strategy === "always_defect") return "defect";
+  if (strategy === "random") return legal[Math.floor(Math.random() * legal.length)];
+
+  if (strategy === "tit_for_tat") {
+    const memory = container.memory[playerId];
+    if (memory.length === 0) return "cooperate";
+
+    const last = memory[memory.length - 1];
+    const other = playerId === "P1" ? "P2" : "P1";
+    return last.actions[other] || "cooperate";
+  }
+
+  return "cooperate";
+}
+
+function score(actions) {
+  const p1 = actions.P1;
+  const p2 = actions.P2;
+
+  if (p1 === "cooperate" && p2 === "cooperate") return { P1: 3, P2: 3 };
+  if (p1 === "defect" && p2 === "cooperate") return { P1: 5, P2: 0 };
+  if (p1 === "cooperate" && p2 === "defect") return { P1: 0, P2: 5 };
+  return { P1: 1, P2: 1 };
+}
+
+function step() {
+  const prior = JSON.parse(JSON.stringify(container.state));
+
+  const actions = {
+    P1: chooseAction("P1", document.getElementById("p1Strategy").value),
+    P2: chooseAction("P2", document.getElementById("p2Strategy").value)
+  };
+
+  const payoffs = score(actions);
+
+  container.tick += 1;
+  container.state.round += 1;
+  container.state.scores.P1 += payoffs.P1;
+  container.state.scores.P2 += payoffs.P2;
+
+  const record = {
+    tick: container.tick,
+    prior_state: prior,
+    actions,
+    payoffs,
+    next_state: JSON.parse(JSON.stringify(container.state))
+  };
+
+  container.state.history.push(record);
+  container.memory.P1.push(record);
+  container.memory.P2.push(record);
+  container.audit.push({ type: "step", record });
+
+  render();
+}
+
+function runMany(n) {
+  for (let i = 0; i < n; i++) step();
+}
+
+function resetGame() {
+  container = makeContainer();
+  container.audit.push({ type: "container_created", label: container.label });
+  render();
+}
+
+function actionClass(action) {
+  return action === "cooperate" ? "cooperate" : "defect";
+}
+
+function render() {
+  document.getElementById("tick").textContent = container.tick;
+  document.getElementById("round").textContent = container.state.round;
+  document.getElementById("p1Score").textContent = container.state.scores.P1;
+  document.getElementById("p2Score").textContent = container.state.scores.P2;
+
+  const tbody = document.getElementById("history");
+  tbody.innerHTML = "";
+
+  for (const row of container.state.history.slice().reverse()) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.tick}</td>
+      <td class="${actionClass(row.actions.P1)}">${row.actions.P1}</td>
+      <td class="${actionClass(row.actions.P2)}">${row.actions.P2}</td>
+      <td>${row.payoffs.P1}</td>
+      <td>${row.payoffs.P2}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById("audit").textContent = JSON.stringify({
+    label: container.label,
+    tick: container.tick,
+    state: container.state,
+    audit_events: container.audit.length
+  }, null, 2);
+}
+
+resetGame();
+</script>
+</body>
+</html>
