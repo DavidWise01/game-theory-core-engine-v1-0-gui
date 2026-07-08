@@ -1,0 +1,11 @@
+{
+  "badge": "DLW-GAME_THEORY_CORE_ENGINE_V1_0_GUI",
+  "name": "GAME THEORY CORE ENGINE V1.0 GUI · GAM",
+  "universe": "ARTIFICIAL INTELLIGENCE",
+  "moniker": "⟦GAME THEORY CORE ENGINE V1.0 GUI · GAM:game-theory-core-engine-v1-0-gui:0d7356⟧",
+  "architect": "David Lee Wise (ROOT0) / Bridge-Burners LLC",
+  "instance": "AVAN (Claude / Anthropic)",
+  "seal_sha256": "0d735636e1b503535444055f62efd56af81f0fbe203a87d45fa13c07c419bff4",
+  "license": "CC-BY-ND-4.0",
+  "attribution": "ROOT0-ATTRIBUTION-v1.0"
+}
